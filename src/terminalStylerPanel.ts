@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { saveRecentStyle, getRecentStyles } from './utils';
+import { saveRecentStyle, getRecentStyles, getTemplateValues, getParentFolder, getAbbreviatedPath, getGitBranch, getRepoName } from './utils';
 
 interface TerminalInfo {
     currentName: string;
@@ -69,13 +69,16 @@ export class TerminalStylerPanel {
                     case 'cancel':
                         this._panel.dispose();
                         break;
-                    case 'applyRecent':
-                        await this._applyStyle(message.name, false);
+                    case 'selectRecent':
                         this._terminalInfo.currentName = message.name;
                         this._update();
                         break;
                     case 'newTerminal':
                         await this._createNewTerminal();
+                        break;
+                    case 'getTemplateValues':
+                        const values = await getTemplateValues();
+                        this._panel.webview.postMessage({ command: 'templateValues', values });
                         break;
                 }
             },
@@ -146,12 +149,18 @@ export class TerminalStylerPanel {
         this._update();
     }
 
-    private _update() {
-        this._panel.webview.html = this._getHtmlForWebview();
+    private async _update() {
+        this._panel.webview.html = await this._getHtmlForWebview();
     }
 
-    private _getHtmlForWebview(): string {
+    private async _getHtmlForWebview(): Promise<string> {
         const recentStyles = getRecentStyles();
+
+        // Get template availability
+        const folder = getParentFolder();
+        const path = getAbbreviatedPath();
+        const repo = await getRepoName();
+        const branch = await getGitBranch();
 
         const recentStylesHtml = recentStyles.length > 0 ? `
             <div class="section recent-section">
@@ -264,6 +273,33 @@ export class TerminalStylerPanel {
         .name-section {
             margin-bottom: 10px;
         }
+        .template-buttons {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .template-btn {
+            padding: 2px 6px;
+            background: transparent;
+            color: var(--vscode-textLink-foreground);
+            border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: var(--vscode-editor-font-family), monospace;
+        }
+        .template-btn:hover {
+            background: var(--vscode-button-secondaryBackground);
+            border-color: var(--vscode-focusBorder);
+        }
+        .emoji-buttons {
+            margin-top: 4px;
+        }
+        .emoji-btn {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 12px;
+            padding: 2px 5px;
+        }
         .bottom-row {
             display: flex;
             align-items: center;
@@ -324,6 +360,24 @@ export class TerminalStylerPanel {
         <label>Name</label>
         <input type="text" id="terminalName" value="${this._escapeHtml(this._terminalInfo.currentName)}"
                placeholder="${this._escapeHtml(this._terminalInfo.defaultName)}">
+        <div class="template-buttons">
+            ${folder ? `<button class="template-btn" data-template="folder" title="Parent folder">folder</button>` : ''}
+            ${path ? `<button class="template-btn" data-template="path" title="Abbreviated path">path</button>` : ''}
+            ${repo ? `<button class="template-btn" data-template="repo" title="Git repo name">repo</button>` : ''}
+            ${branch ? `<button class="template-btn" data-template="branch" title="Git branch">branch</button>` : ''}
+            <button class="template-btn" data-template="date" title="Today's date">date</button>
+            <button class="template-btn" data-template="time" title="Current time">time</button>
+        </div>
+        <div class="template-buttons emoji-buttons">
+            <button class="template-btn emoji-btn" data-template="rocket" title="Rocket">🚀</button>
+            <button class="template-btn emoji-btn" data-template="fire" title="Fire">🔥</button>
+            <button class="template-btn emoji-btn" data-template="sparkles" title="Sparkles">✨</button>
+            <button class="template-btn emoji-btn" data-template="skull" title="Skull">☠️</button>
+            <button class="template-btn emoji-btn" data-template="gear" title="Gear">⚙️</button>
+            <button class="template-btn emoji-btn" data-template="package" title="Package">📦</button>
+            <button class="template-btn emoji-btn" data-template="test" title="Test">🧪</button>
+            <button class="template-btn emoji-btn" data-template="zombie" title="Zombie">🧟</button>
+        </div>
     </div>
 
     <div class="options-section">
@@ -366,7 +420,7 @@ export class TerminalStylerPanel {
         document.querySelectorAll('.recent-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 vscode.postMessage({
-                    command: 'applyRecent',
+                    command: 'selectRecent',
                     name: btn.dataset.name
                 });
             });
@@ -384,6 +438,79 @@ export class TerminalStylerPanel {
                 vscode.postMessage({ command: 'cancel' });
             }
         });
+
+        // Template buttons - request values and insert
+        let templateValues = null;
+        let pendingTemplate = null;
+
+        const emojis = {
+            rocket: '🚀',
+            fire: '🔥',
+            sparkles: '✨',
+            skull: '☠️',
+            gear: '⚙️',
+            package: '📦',
+            test: '🧪',
+            zombie: '🧟'
+        };
+
+        function insertTemplate(template) {
+            let value;
+            if (emojis[template]) {
+                value = emojis[template];
+            } else if (templateValues) {
+                value = templateValues[template];
+                if (value === undefined || value === null || value === '') {
+                    // Skip if no value available
+                    return;
+                }
+            } else {
+                return;
+            }
+
+            const cursorPos = nameInput.selectionStart;
+            const before = nameInput.value.substring(0, cursorPos);
+            const after = nameInput.value.substring(nameInput.selectionEnd);
+
+            // Add space before if there's text and it doesn't end with a space
+            let prefix = '';
+            if (before.length > 0 && !before.endsWith(' ')) {
+                prefix = ' ';
+            }
+
+            nameInput.value = before + prefix + value + after;
+            nameInput.selectionStart = nameInput.selectionEnd = cursorPos + prefix.length + value.length;
+            headerName.textContent = nameInput.value;
+            nameInput.focus();
+        }
+
+        // Listen for template values from extension
+        window.addEventListener('message', (event) => {
+            const message = event.data;
+            if (message.command === 'templateValues') {
+                templateValues = message.values;
+                if (pendingTemplate) {
+                    insertTemplate(pendingTemplate);
+                    pendingTemplate = null;
+                }
+            }
+        });
+
+        // Click handler for template buttons
+        document.querySelectorAll('.template-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const template = btn.dataset.template;
+                if (!templateValues) {
+                    pendingTemplate = template;
+                    vscode.postMessage({ command: 'getTemplateValues' });
+                } else {
+                    insertTemplate(template);
+                }
+            });
+        });
+
+        // Pre-fetch template values
+        vscode.postMessage({ command: 'getTemplateValues' });
 
         nameInput.focus();
         nameInput.select();

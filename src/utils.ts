@@ -133,3 +133,80 @@ export function getRecentStyles(): Array<{name: string}> {
     const config = vscode.workspace.getConfiguration('cursorTerminalStyler');
     return config.get<Array<{name: string}>>('recentStyles', []);
 }
+
+/**
+ * Get the parent folder name (one level up from workspace)
+ */
+export function getParentFolder(): string | undefined {
+    const folders = vscode.workspace.workspaceFolders;
+    if (folders && folders.length > 0) {
+        const parts = folders[0].uri.fsPath.split('/').filter(Boolean);
+        if (parts.length >= 2) {
+            return parts[parts.length - 2];
+        }
+    }
+    return undefined;
+}
+
+/**
+ * Get abbreviated path (last 2-3 segments)
+ */
+export function getAbbreviatedPath(): string | undefined {
+    const folders = vscode.workspace.workspaceFolders;
+    if (folders && folders.length > 0) {
+        const parts = folders[0].uri.fsPath.split('/').filter(Boolean);
+        const lastParts = parts.slice(-3);
+        return lastParts.join('/');
+    }
+    return undefined;
+}
+
+/**
+ * Get git repository name
+ */
+export async function getRepoName(): Promise<string | undefined> {
+    try {
+        const gitExtension = vscode.extensions.getExtension('vscode.git');
+        if (!gitExtension) {
+            return undefined;
+        }
+
+        const git = gitExtension.isActive
+            ? gitExtension.exports
+            : await gitExtension.activate();
+
+        const api = git.getAPI(1);
+        if (!api || api.repositories.length === 0) {
+            return undefined;
+        }
+
+        const repo = api.repositories[0];
+        const repoPath = repo.rootUri.fsPath;
+        const parts = repoPath.split('/').filter(Boolean);
+        return parts[parts.length - 1];
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * Get template values for insertion
+ */
+export async function getTemplateValues(): Promise<{
+    folder: string | undefined;
+    path: string | undefined;
+    repo: string | undefined;
+    branch: string | undefined;
+    date: string;
+    time: string;
+}> {
+    const now = new Date();
+    return {
+        folder: getParentFolder(),
+        path: getAbbreviatedPath(),
+        repo: await getRepoName(),
+        branch: await getGitBranch(),
+        date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+    };
+}
