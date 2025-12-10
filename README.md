@@ -1,8 +1,9 @@
 # Terminal Styler
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/PaperDiamond.terminal-styler?style=flat-square&color=blue)](https://marketplace.visualstudio.com/items?itemName=PaperDiamond.terminal-styler)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/PaperDiamond.terminal-styler?style=flat-square&color=green)](https://marketplace.visualstudio.com/items?itemName=PaperDiamond.terminal-styler)
-[![License](https://img.shields.io/github/license/paperdiamond/terminal-styler?style=flat-square)](LICENSE)
+[![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Terminal%20Styler-blue?style=flat-square&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=PaperDiamond.terminal-styler)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
+> **[Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=PaperDiamond.terminal-styler)**
 
 **If you're like me and you're running lots of terminals in Cursor and VS Code, this is for you.**
 
