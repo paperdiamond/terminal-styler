@@ -2,7 +2,7 @@
   "name": "terminal-styler",
   "displayName": "Terminal Styler",
   "description": "Style your active terminal with custom name, icon, and color in one panel. Quick access via status bar button or Cmd+Shift+T.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "PaperDiamond",
   "author": {
     "name": "paperdiamond"
