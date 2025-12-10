@@ -1,0 +1,63 @@
+{
+  "name": "cursor-terminal-styler",
+  "displayName": "Cursor Terminal Styler",
+  "description": "Style your active terminal with custom name, icon, and color in one panel",
+  "version": "0.1.0",
+  "publisher": "paperdiamond",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cursorTerminalStyler.styleActive",
+        "title": "Style Active Terminal",
+        "category": "Terminal Styler"
+      }
+    ],
+    "configuration": {
+      "title": "Cursor Terminal Styler",
+      "properties": {
+        "cursorTerminalStyler.defaultNameTemplate": {
+          "type": "string",
+          "default": "${workspace} (${branch})",
+          "description": "Default name template for new terminal names. Supports ${workspace} and ${branch} placeholders."
+        },
+        "cursorTerminalStyler.recentStyles": {
+          "type": "array",
+          "default": [],
+          "description": "Recent style combinations (name, icon, color) for quick reuse.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "icon": { "type": "string" },
+              "color": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  },
+  "extensionDependencies": [
+    "vscode.git"
+  ]
+}
