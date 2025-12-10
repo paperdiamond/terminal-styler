@@ -1,9 +1,10 @@
 # Terminal Styler
 
 [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Terminal%20Styler-blue?style=flat-square&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=PaperDiamond.terminal-styler)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-Terminal%20Styler-purple?style=flat-square&logo=eclipse)](https://open-vsx.org/extension/PaperDiamond/terminal-styler)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-> **[Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=PaperDiamond.terminal-styler)**
+> **[Install for VS Code](https://marketplace.visualstudio.com/items?itemName=PaperDiamond.terminal-styler)** | **[Install for Cursor](https://open-vsx.org/extension/PaperDiamond/terminal-styler)**
 
 **If you're like me and you're running lots of terminals in Cursor and VS Code, this is for you.**
 
