@@ -1,14 +1,39 @@
 {
-  "name": "cursor-terminal-styler",
-  "displayName": "Cursor Terminal Styler",
-  "description": "Style your active terminal with custom name, icon, and color in one panel",
+  "name": "terminal-styler",
+  "displayName": "Terminal Styler",
+  "description": "Style your active terminal with custom name, icon, and color in one panel. Quick access via status bar button or Cmd+Shift+T.",
   "version": "0.1.0",
-  "publisher": "paperdiamond",
+  "publisher": "PaperDiamond",
+  "author": {
+    "name": "paperdiamond"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paperdiamond/terminal-styler"
+  },
+  "bugs": {
+    "url": "https://github.com/paperdiamond/terminal-styler/issues"
+  },
+  "homepage": "https://github.com/paperdiamond/terminal-styler#readme",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "terminal",
+    "style",
+    "customize",
+    "icon",
+    "color",
+    "rename"
   ],
   "activationEvents": [
     "onStartupFinished"
