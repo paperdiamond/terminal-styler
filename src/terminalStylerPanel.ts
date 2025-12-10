@@ -62,7 +62,7 @@ export class TerminalStylerPanel {
             async (message) => {
                 switch (message.command) {
                     case 'apply':
-                        await this._applyStyle(message.name);
+                        await this._applyStyle(message.name, message.skipPickers ?? false);
                         this._terminalInfo.currentName = message.name;
                         this._update();
                         break;
@@ -70,7 +70,7 @@ export class TerminalStylerPanel {
                         this._panel.dispose();
                         break;
                     case 'applyRecent':
-                        await this._applyStyle(message.name);
+                        await this._applyStyle(message.name, false);
                         this._terminalInfo.currentName = message.name;
                         this._update();
                         break;
@@ -101,7 +101,7 @@ export class TerminalStylerPanel {
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
     }
 
-    private async _applyStyle(name: string) {
+    private async _applyStyle(name: string, skipPickers: boolean) {
         const terminal = this._terminalInfo.terminal;
 
         try {
@@ -113,14 +113,19 @@ export class TerminalStylerPanel {
                 name: name
             });
 
-            // 2. Open the icon picker
-            await vscode.commands.executeCommand('workbench.action.terminal.changeIcon');
+            if (!skipPickers) {
+                // 2. Open the icon picker
+                await vscode.commands.executeCommand('workbench.action.terminal.changeIcon');
 
-            // 3. Open the color picker
-            await vscode.commands.executeCommand('workbench.action.terminal.changeColor');
+                // 3. Open the color picker
+                await vscode.commands.executeCommand('workbench.action.terminal.changeColor');
+            }
 
             // Save to recent styles
             await saveRecentStyle(name);
+
+            // Focus the terminal so user can start typing immediately
+            terminal.show();
 
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to style terminal: ${error}`);
@@ -288,6 +293,21 @@ export class TerminalStylerPanel {
         button.secondary:hover {
             background: var(--vscode-button-secondaryHoverBackground);
         }
+        .options-section {
+            margin-bottom: 10px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            color: var(--vscode-descriptionForeground);
+        }
+        .checkbox-label input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -306,6 +326,13 @@ export class TerminalStylerPanel {
                placeholder="${this._escapeHtml(this._terminalInfo.defaultName)}">
     </div>
 
+    <div class="options-section">
+        <label class="checkbox-label">
+            <input type="checkbox" id="skipPickers">
+            <span>Rename only (skip icon & color pickers)</span>
+        </label>
+    </div>
+
     <div class="bottom-row">
         <button class="primary" id="applyBtn">Apply</button>
         <button class="secondary" id="cancelBtn">Cancel</button>
@@ -316,6 +343,7 @@ export class TerminalStylerPanel {
 
         const nameInput = document.getElementById('terminalName');
         const headerName = document.getElementById('headerName');
+        const skipPickersCheckbox = document.getElementById('skipPickers');
 
         nameInput.addEventListener('input', () => {
             headerName.textContent = nameInput.value || '${this._escapeHtml(this._terminalInfo.defaultName)}';
@@ -323,7 +351,8 @@ export class TerminalStylerPanel {
 
         document.getElementById('applyBtn').addEventListener('click', () => {
             const name = nameInput.value || '${this._escapeHtml(this._terminalInfo.defaultName)}';
-            vscode.postMessage({ command: 'apply', name });
+            const skipPickers = skipPickersCheckbox.checked;
+            vscode.postMessage({ command: 'apply', name, skipPickers });
         });
 
         document.getElementById('cancelBtn').addEventListener('click', () => {
@@ -341,6 +370,19 @@ export class TerminalStylerPanel {
                     name: btn.dataset.name
                 });
             });
+        });
+
+        // Keyboard shortcuts: Enter to apply, Escape to cancel
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const name = nameInput.value || '${this._escapeHtml(this._terminalInfo.defaultName)}';
+                const skipPickers = skipPickersCheckbox.checked;
+                vscode.postMessage({ command: 'apply', name, skipPickers });
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                vscode.postMessage({ command: 'cancel' });
+            }
         });
 
         nameInput.focus();
